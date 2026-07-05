@@ -62,40 +62,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     langSelect.addEventListener('change', (e) => {
-        const targetLang = e.target.value;
-        const iframe = document.querySelector('iframe.goog-te-menu-frame');
-        if (!iframe) {
-            // If the iframe hasn't loaded yet, try again in 500ms
-            setTimeout(() => langSelect.dispatchEvent(new Event('change')), 500);
+        const targetLang = e.target.value; // 'en' or 'ko'
+        
+        // Try the native combo box method first (bypasses CORS)
+        const combo = document.querySelector('select.goog-te-combo');
+        if (combo) {
+            combo.value = targetLang;
+            combo.dispatchEvent(new Event('change'));
             return;
         }
-        try {
-            const innerDoc = iframe.contentDocument || iframe.contentWindow.document;
-            const langMap = { 'en': 'English', 'ko': 'Korean' };
-            const langText = langMap[targetLang];
-            
-            const spans = innerDoc.getElementsByTagName('span');
-            for (let i = 0; i < spans.length; i++) {
-                if (spans[i].textContent.includes(langText)) {
-                    spans[i].click();
-                    return;
-                }
-            }
-        } catch(err) {
-            console.error("Translate iframe error:", err);
-            // Fallback to cookie method if iframe is inaccessible due to CORS
-            const hostname = window.location.hostname;
-            if (targetLang === 'ko') {
-                document.cookie = `googtrans=/en/ko; path=/`;
-                document.cookie = `googtrans=/en/ko; domain=${hostname}; path=/`;
-                document.cookie = `googtrans=/en/ko; domain=.${hostname}; path=/`;
-            } else {
-                document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-                document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=${hostname}; path=/;`;
-                document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=.${hostname}; path=/;`;
-            }
-            window.location.reload();
+
+        // Fallback to cookie method if combo isn't found
+        const hostname = window.location.hostname;
+        if (targetLang === 'ko') {
+            document.cookie = `googtrans=/en/ko; path=/`;
+            document.cookie = `googtrans=/en/ko; domain=${hostname}; path=/`;
+        } else {
+            document.cookie = `googtrans=/en/en; path=/`;
+            document.cookie = `googtrans=/en/en; domain=${hostname}; path=/`;
         }
+        window.location.reload();
     });
 
     let allReleases = [];
