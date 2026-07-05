@@ -316,10 +316,43 @@ document.addEventListener('DOMContentLoaded', () => {
             return a.localeCompare(b);
         });
 
+        const logoMap = {
+            'Google': 'images/google.png',
+            'Anthropic': 'images/anthropic.png',
+            'OpenAI': 'images/openai.png',
+            'Microsoft': 'images/microsoft.png',
+            'Amazon Web Services': 'images/amazon.png'
+        };
+
+        const needsInvert = ['Anthropic', 'OpenAI', 'Amazon Web Services'];
+
         allServices.forEach(service => {
             const tab = document.createElement('button');
             tab.className = 'tab-button';
-            tab.textContent = service === 'Amazon Web Services' ? 'AWS' : service;
+            
+            if (logoMap[service]) {
+                const img = document.createElement('img');
+                img.src = logoMap[service];
+                img.alt = service;
+                img.style.height = '24px';
+                img.style.width = 'auto';
+                img.style.display = 'block';
+                img.style.objectFit = 'contain';
+                
+                // Invert black logos for dark theme visibility
+                if (needsInvert.includes(service)) {
+                    img.style.filter = 'invert(1) brightness(2)';
+                }
+                
+                tab.appendChild(img);
+                tab.style.padding = '8px 16px';
+                tab.style.display = 'flex';
+                tab.style.alignItems = 'center';
+                tab.style.justifyContent = 'center';
+            } else {
+                tab.textContent = service === 'Amazon Web Services' ? 'AWS' : service;
+            }
+            
             tab.onclick = () => selectTab(service, tab);
             tabsContainer.appendChild(tab);
         });
