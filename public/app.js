@@ -64,23 +64,22 @@ document.addEventListener('DOMContentLoaded', () => {
     langSelect.addEventListener('change', (e) => {
         const targetLang = e.target.value; // 'en' or 'ko'
         
-        // Try the native combo box method first (bypasses CORS)
-        const combo = document.querySelector('select.goog-te-combo');
-        if (combo) {
-            combo.value = targetLang;
-            combo.dispatchEvent(new Event('change'));
-            return;
-        }
+        // Clear existing googtrans cookies
+        const host = window.location.hostname;
+        document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=' + host + '; path=/;';
+        document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=.' + host + '; path=/;';
 
-        // Fallback to cookie method if combo isn't found
-        const hostname = window.location.hostname;
         if (targetLang === 'ko') {
-            document.cookie = `googtrans=/en/ko; path=/`;
-            document.cookie = `googtrans=/en/ko; domain=${hostname}; path=/`;
+            // Set translation to Korean without specifying domain to avoid CORS/Public Suffix List issues
+            document.cookie = 'googtrans=/en/ko; path=/';
         } else {
-            document.cookie = `googtrans=/en/en; path=/`;
-            document.cookie = `googtrans=/en/en; domain=${hostname}; path=/`;
+            // Set translation back to English
+            document.cookie = 'googtrans=/ko/en; path=/';
+            document.cookie = 'googtrans=/en/en; path=/';
         }
+        
+        // Reload to apply translation
         window.location.reload();
     });
 
