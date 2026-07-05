@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI release note</title>
+    <meta name="description" content="Dashboard for tracking software release notes and updates.">
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header>
+            <div class="header-content">
+                <h1>AI release note</h1>
+                <p>Stay updated with the latest releases across all services.</p>
+            </div>
+            <div class="controls" style="display: flex; gap: 10px; align-items: center;">
+                <select id="language-select" class="tab-button" style="margin: 0; padding: 8px 12px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.05); color: #fff; cursor: pointer; outline: none;">
+                    <option value="en" style="color: #000;">English</option>
+                    <option value="ko" style="color: #000;">한국어</option>
+                </select>
+                <input type="text" id="search-input" placeholder="Search releases..." style="flex: 1;">
+                <button id="refresh-btn" class="tab-button" style="margin: 0;">Fetch Latest</button>
+                <button id="help-btn" class="tab-button" style="margin: 0; display: flex; align-items: center; justify-content: center; padding: 8px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                </button>
+            </div>
+        </header>
+        
+        <!-- Hidden Google Translate Element -->
+        <div id="google_translate_element" style="position: absolute; top: -9999px; left: -9999px; width: 1px; height: 1px; overflow: hidden; opacity: 0;"></div>
+        <script type="text/javascript">
+            function googleTranslateElementInit() {
+                new google.translate.TranslateElement({pageLanguage: 'en', includedLanguages: 'ko,en', autoDisplay: false}, 'google_translate_element');
+            }
+        </script>
+        <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+        </header>
+        
+        <div id="tabs-container" class="tabs-container">
+            <!-- Tabs will be injected here -->
+        </div>
+        <div id="sub-tabs-container" class="sub-tabs-container" style="display: none;">
+            <!-- Sub-tabs will be injected here -->
+        </div>
+
+        <main>
+            <div id="loading" class="loader">
+                <div class="spinner"></div>
+                <p>Fetching latest releases...</p>
+            </div>
+            <div id="error" class="error-message" style="display: none;"></div>
+            <div id="releases-grid" class="releases-grid"></div>
+        </main>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="modal-content" style="background: var(--bg-color); border: 1px solid var(--card-border); padding: 24px; border-radius: 12px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; position: relative;">
+            <button id="close-help-btn" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; color: var(--text-secondary); cursor: pointer; font-size: 20px;">&times;</button>
+            <h2 style="margin-bottom: 20px; color: var(--text-primary); border-bottom: 1px solid var(--card-border); padding-bottom: 10px;">Release Note Dashboard Updates</h2>
+            <ul id="changelog-list" style="list-style: none; padding: 0; color: var(--text-secondary); line-height: 1.6;">
+                <li style="margin-bottom: 15px;">
+                    <strong style="color: var(--accent-color);">2026-07-01</strong>
+                    <br>- ⏪ **원문 딥리딩 요약(Deep Reading) 기능 롤백**: 클라우드 벤더사(AWS 등)의 강력한 봇 차단(CAPTCHA)으로 인해 안정적인 요약 제공이 어려워, 기존 RSS 기반의 빠르고 안정적인 요약 기능으로 원복했습니다.
+                    <br>- 🛡️ API 키 보안 강화 및 로컬/서버 완벽 분리 적용
+                    <br>- 신규 서비스 탭 생성 준비: Microsoft Agent Framework, Amazon QuickSight
+                    <br>- 한국어 번역 기능 오류 수정 (버튼 클릭 시 번역 안 되던 현상)
+                    <br>- 서브 탭(Sub category) 버튼 폰트 축소 및 2~3줄 자동 줄바꿈 적용
+                    <br>- AWS 뉴스 제목 자동 축약(Generic Title) 버그 수정
+                    <br>- AWS와 Amazon 탭을 하나로 통합 (AWS)
+                    <br>- 도움말(업데이트 내역) 기능 추가
+                </li>
+                <li style="margin-bottom: 15px;">
+                    <strong style="color: var(--accent-color);">2026-06-29</strong>
+                    <br>- 구글 번역기 자동 번역 팝업 버그 픽스
+                    <br>- 대시보드 타이틀을 'AI release note'로 변경
+                </li>
+                <li style="margin-bottom: 15px;">
+                    <strong style="color: var(--accent-color);">2026-06-26</strong>
+                    <br>- 다크 모드 기반 Release Notes Dashboard 최초 구축
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
