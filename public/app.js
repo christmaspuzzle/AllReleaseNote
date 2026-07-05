@@ -156,6 +156,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     if(restOfTitle.includes(' - ')) {
                         const subParts = restOfTitle.split(' - ');
                         subService = subParts[0].trim();
+                        
+                        // Normalize known sub-services to prevent duplicates
+                        const subLower = subService.toLowerCase();
+                        if (subLower === 'amazon quicksight') subService = 'Amazon QuickSight';
+                        else if (subLower === 'amazon sagemaker') subService = 'Amazon SageMaker';
+                        else if (subLower === 'amazon bedrock') subService = 'Amazon Bedrock';
+                        else if (subLower === 'amazon web services' || subLower === 'aws') subService = 'General';
+
                         let actualTitleToDisplay = subParts.slice(1).join(' - ').trim();
                         
                         // Check if the actual title is generic (only a date, version, or week)
