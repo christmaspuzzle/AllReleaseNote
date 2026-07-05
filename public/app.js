@@ -311,7 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add "All" tab
         const allTab = document.createElement('button');
         allTab.className = 'tab-button active';
-        allTab.textContent = 'All Services';
+        allTab.textContent = `All Services (${allReleases.length})`;
         allTab.onclick = () => selectTab('all', allTab);
         tabsContainer.appendChild(allTab);
 
@@ -331,7 +331,12 @@ document.addEventListener('DOMContentLoaded', () => {
         allServices.forEach(service => {
             const tab = document.createElement('button');
             tab.className = 'tab-button';
-            tab.textContent = service === 'Amazon Web Services' ? 'AWS' : service;
+            
+            // Calculate count for this service
+            const count = allReleases.filter(r => r.service === service).length;
+            
+            const serviceName = service === 'Amazon Web Services' ? 'AWS' : service;
+            tab.textContent = `${serviceName} (${count})`;
             tab.onclick = () => selectTab(service, tab);
             tabsContainer.appendChild(tab);
         });
@@ -380,7 +385,16 @@ document.addEventListener('DOMContentLoaded', () => {
         subServices.forEach(sub => {
             const btn = document.createElement('button');
             btn.className = 'sub-tab-button';
-            btn.textContent = sub;
+            
+            // Calculate count for this subService
+            let count = 0;
+            if (service === 'all') {
+                count = allReleases.filter(r => r.subService === sub).length;
+            } else {
+                count = allReleases.filter(r => r.service === service && r.subService === sub).length;
+            }
+            
+            btn.textContent = `${sub} (${count})`;
             btn.onclick = () => toggleSubTab(sub, btn);
             subTabsContainer.appendChild(btn);
         });
