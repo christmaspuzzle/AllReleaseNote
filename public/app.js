@@ -9,7 +9,12 @@ window.getServiceIcon = function(service) {
     };
     
     if (logoMap[service]) {
-        return `<img src="${logoMap[service]}" style="width: 24px; height: 24px; border-radius: 50%; background: #fff; object-fit: contain; padding: 2px; box-sizing: border-box;" alt="${service} icon">`;
+        // Reduce padding for OpenAI and Amazon to make them visually larger within the same 24px circle
+        let padding = '3px';
+        if (service === 'OpenAI' || service === 'Amazon Web Services' || service === 'AWS') {
+            padding = '0px';
+        }
+        return `<img src="${logoMap[service]}" style="width: 24px; height: 24px; border-radius: 50%; background: #fff; object-fit: contain; padding: ${padding}; box-sizing: border-box;" alt="${service} icon">`;
     }
     
     return '<svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>';
