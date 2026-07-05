@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Language Toggle Logic (Google Translate)
-    const isKorean = document.cookie.includes('googtrans=/en/ko');
+    const isKorean = document.cookie.includes('googtrans=/en/ko') || window.location.hash.includes('ko');
     if (isKorean) {
         langSelect.value = 'ko';
     }
@@ -76,17 +76,31 @@ document.addEventListener('DOMContentLoaded', () => {
     langSelect.addEventListener('change', (e) => {
         const targetLang = e.target.value; 
         
-        // Clear existing cookies
-        document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+        // 1. Clear existing cookies aggressively
+        const domains = [window.location.hostname, '.' + window.location.hostname, ''];
+        domains.forEach(d => {
+            const domainStr = d ? ` domain=${d};` : '';
+            document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;${domainStr}`;
+            document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;${domainStr}`;
+        });
         
+        // 2. Set new cookies for translation
         if (targetLang !== 'en') {
-            // Set for both naked path and domain explicitly
-            document.cookie = `googtrans=/en/${targetLang}; path=/`;
-            document.cookie = `googtrans=/en/${targetLang}; domain=${window.location.hostname}; path=/`;
+            document.cookie = `googtrans=/en/${targetLang}; path=/; SameSite=Lax;`;
+            document.cookie = `googtrans=/en/${targetLang}; domain=${window.location.hostname}; path=/; SameSite=Lax;`;
+            document.cookie = `googtrans=/en/${targetLang}; domain=.${window.location.hostname}; path=/; SameSite=Lax;`;
         }
         
-        // Reload the page to let Google Translate read the cookie and apply translation on load
+        // 3. Fallback: URL Hash method
+        let url = window.location.href.split('#')[0];
+        if (targetLang !== 'en') {
+            url += `#googtrans(en|${targetLang})`;
+        } else {
+            url += `#googtrans(ko|en)`; // Force revert to English
+        }
+        
+        // 4. Force reload and clear cache
+        window.location.href = url;
         window.location.reload();
     });
 
