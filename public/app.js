@@ -1,10 +1,17 @@
-// Helper to get service icons
 window.getServiceIcon = function(service) {
-    if (service === 'Google') return '<svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.2 14.22c-1.18.78-2.65 1.18-4.2 1.18-2.3 0-4.3-1.07-5.6-2.73l1.8-1.5c.9 1.1 2.2 1.8 3.8 1.8 1.1 0 2.1-.3 2.8-.8l1.4 2.05zM12 11c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm4.6 3.6l-1.8-1.5c.3-.4.4-.8.4-1.3 0-1.8-1.5-3.3-3.3-3.3S8.6 10 8.6 11.8c0 .5.1.9.3 1.3l-1.8 1.5C6.4 13.5 6 12.7 6 11.8c0-3.2 2.6-5.8 5.8-5.8s5.8 2.6 5.8 5.8c0 .9-.4 1.7-1 2.8z"/></svg>';
-    if (service === 'OpenAI') return '<svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.073zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558L12.5973 8.3829v-2.3324a.0804.0804 0 0 1 .0332-.0615l4.854-2.8055a4.4992 4.4992 0 0 1 6.1408 1.6464 4.4708 4.4708 0 0 1 .5346 3.0137l-.142-.0852-4.783-2.7582a.7712.7712 0 0 0-.7806 0v6.7511zM8.3065 12.863l-2.02-1.1686a.071.071 0 0 1-.038-.052V6.0598a4.504 4.504 0 0 1 4.4945-4.4944 4.4755 4.4755 0 0 1 2.8764 1.0408l-.1419.0804-4.7783 2.7582a.7948.7948 0 0 0-.3927.6813v6.7369zm7.1979-3.487l-2.0201 1.1685V6.6573a.7664.7664 0 0 0-.3879-.6765L7.282 2.6265l2.0201-1.1685a.0757.0757 0 0 1 .071 0l4.8303 2.7865A4.504 4.504 0 0 1 15.5044 11.2v-1.824zm-3.5044-1.3828l-2.6105-1.5034 2.6105-1.5035 2.6105 1.5035-2.6105 1.5034z"/></svg>';
-    if (service === 'Anthropic') return '<svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M17.3 17.5h-1.8l-1-2.5H9.6l-1 2.5H6.8L11.5 5h1.1l4.7 12.5zm-5-10.7l-2 5.3h4l-2-5.3z"/></svg>';
-    if (service === 'Microsoft') return '<svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zm12.6 0H12.6V0H24v11.4z"/></svg>';
-    if (service === 'AWS') return '<svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M14.54 13.91c-.81.42-2.1.84-3.49.84-2.22 0-3.32-1.15-3.32-2.73 0-1.86 1.4-2.88 3.88-2.88 1.19 0 2.05.23 2.76.51V9.22c0-1.63-.88-2.58-2.56-2.58-1.21 0-2.28.37-3.14.86L8 5.7c1.16-.72 2.84-1.19 4.61-1.19 3.03 0 4.66 1.51 4.66 4.3v5.68c0 .88.23 1.35.58 1.84v1.86a3.8 3.8 0 0 1-3.31-4.28zM14.54 11.1c-.56-.23-1.28-.42-2.07-.42-1.37 0-2.03.49-2.03 1.28 0 .72.58 1.19 1.54 1.19.98 0 1.93-.37 2.56-.84v-1.21z"/><path fill="currentColor" d="M16.51 18.06c-1.33.61-3.26.98-5.33.98-2.86 0-5.35-1.07-7.24-2.89L5.32 17.5c2.3 2.14 5.28 3.33 8.57 3.33 2.47 0 4.8-.54 6.84-1.54l-4.22-1.23z"/></svg>';
+    const logoMap = {
+        'Google': 'images/google.png',
+        'Anthropic': 'images/anthropic.png',
+        'OpenAI': 'images/openai.png',
+        'Microsoft': 'images/microsoft.png',
+        'Amazon Web Services': 'images/amazon.png',
+        'AWS': 'images/amazon.png'
+    };
+    
+    if (logoMap[service]) {
+        return `<img src="${logoMap[service]}" style="width: 24px; height: 24px; border-radius: 50%; background: #fff; object-fit: contain; padding: 2px; box-sizing: border-box;" alt="${service} icon">`;
+    }
+    
     return '<svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>';
 };
 
@@ -316,43 +323,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return a.localeCompare(b);
         });
 
-        const logoMap = {
-            'Google': 'images/google.png',
-            'Anthropic': 'images/anthropic.png',
-            'OpenAI': 'images/openai.png',
-            'Microsoft': 'images/microsoft.png',
-            'Amazon Web Services': 'images/amazon.png'
-        };
-
-        const needsInvert = ['Anthropic', 'OpenAI', 'Amazon Web Services'];
-
         allServices.forEach(service => {
             const tab = document.createElement('button');
             tab.className = 'tab-button';
-            
-            if (logoMap[service]) {
-                const img = document.createElement('img');
-                img.src = logoMap[service];
-                img.alt = service;
-                img.style.height = '24px';
-                img.style.width = 'auto';
-                img.style.display = 'block';
-                img.style.objectFit = 'contain';
-                
-                // Invert black logos for dark theme visibility
-                if (needsInvert.includes(service)) {
-                    img.style.filter = 'invert(1) brightness(2)';
-                }
-                
-                tab.appendChild(img);
-                tab.style.padding = '8px 16px';
-                tab.style.display = 'flex';
-                tab.style.alignItems = 'center';
-                tab.style.justifyContent = 'center';
-            } else {
-                tab.textContent = service === 'Amazon Web Services' ? 'AWS' : service;
-            }
-            
+            tab.textContent = service === 'Amazon Web Services' ? 'AWS' : service;
             tab.onclick = () => selectTab(service, tab);
             tabsContainer.appendChild(tab);
         });
