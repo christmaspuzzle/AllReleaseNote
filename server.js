@@ -23,8 +23,15 @@ const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const DATA_FILE = path.join(__dirname, 'data', 'releases.json');
 const DATA_DIR = path.join(__dirname, 'data');
+const INITIAL_DATA_FILE = path.join(__dirname, 'initial_data.json');
+
 if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+if (!fs.existsSync(DATA_FILE) && fs.existsSync(INITIAL_DATA_FILE)) {
+    fs.copyFileSync(INITIAL_DATA_FILE, DATA_FILE);
+    console.log("Seeded volume with historical data!");
+
 }
 
 
