@@ -28,10 +28,36 @@ const INITIAL_DATA_FILE = path.join(__dirname, 'initial_data.json');
 if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
 }
-if (!fs.existsSync(DATA_FILE) && fs.existsSync(INITIAL_DATA_FILE)) {
-    fs.copyFileSync(INITIAL_DATA_FILE, DATA_FILE);
-    console.log("Seeded volume with historical data!");
-
+if (fs.existsSync(INITIAL_DATA_FILE)) {
+    try {
+        const initContent = fs.readFileSync(INITIAL_DATA_FILE, 'utf-8');
+        let existingItems = [];
+        if (fs.existsSync(DATA_FILE)) {
+            existingItems = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+        }
+        
+        const map = new Map();
+        existingItems.forEach(item => map.set(item.guid || item.link, item));
+        
+        const initItems = JSON.parse(initContent);
+        let addedCount = 0;
+        initItems.forEach(item => {
+            const key = item.guid || item.link;
+            if (!map.has(key)) {
+                map.set(key, item);
+                addedCount++;
+            }
+        });
+        
+        if (addedCount > 0) {
+            const merged = Array.from(map.values());
+            merged.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+            fs.writeFileSync(DATA_FILE, JSON.stringify(merged, null, 2), 'utf-8');
+            console.log(`Merged ${addedCount} historical items from initial_data.json into volume.`);
+        }
+    } catch(err) {
+        console.error("Error merging initial_data:", err);
+    }
 }
 
 
