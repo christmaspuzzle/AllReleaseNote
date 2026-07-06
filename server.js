@@ -223,14 +223,107 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
-    if (req.url === '/api/releases/refresh' && req.method === 'POST') {
+    if (req.url.startsWith('/api/releases/refresh') && req.method === 'POST') {
         try {
             const data = await updateReleases();
+            // If they want ko, we can just return it without translation and let them fetch /api/releases?lang=ko
+            // but we'll let it return standard English for now.
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify(data));
         } catch(e) {
             res.writeHead(500, { 'Content-Type': 'text/plain' });
             res.end('Error fetching releases');
+        }
+        return;
+    }
+
+    if (req.url.startsWith('/api/releases')) {
+        const urlObj = new URL(req.url, `http://${req.headers.host}`);
+        try {
+            let items = [];
+            if (fs.existsSync(DATA_FILE)) {
+                items = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+            }
+            
+            const targetLang = urlObj.searchParams.get('lang');
+            if (targetLang === 'ko') {
+                const KO_DATA_FILE = path.join(DATA_DIR, 'releases_ko.json');
+                let koItems = [];
+                if (fs.existsSync(KO_DATA_FILE)) {
+                    koItems = JSON.parse(fs.readFileSync(KO_DATA_FILE, 'utf-8'));
+                }
+                
+                // Merge translated items with original to see what's missing
+                const koMap = new Map(koItems.map(i => [i.guid || i.link, i]));
+                
+                // We will translate missing items in the background to avoid blocking the response for too long
+                const missingItems = items.filter(i => !koMap.has(i.guid || i.link));
+                if (missingItems.length > 0) {
+                    // Background translation process
+                    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+                    if (apiKey) {
+                        (async () => {
+                            try {
+                                const batchSize = 10;
+                                for (let i = 0; i < missingItems.length; i += batchSize) {
+                                    const batch = missingItems.slice(i, i + batchSize);
+                                    const textsToTranslate = batch.map(item => `TITLE: ${item.title}\nDESC: ${item.description}`);
+                                    
+                                    const prompt = `Translate the following array of release notes into Korean. Return a valid JSON array of strings in the exact same order. Do not return markdown code blocks, just the JSON array.
+                                    Input:
+                                    ${JSON.stringify(textsToTranslate)}`;
+                                    
+                                    const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            contents: [{ parts: [{ text: prompt }] }],
+                                            generationConfig: { responseMimeType: "application/json" }
+                                        })
+                                    });
+                                    
+                                    if (geminiRes.ok) {
+                                        const data = await geminiRes.json();
+                                        let resultText = data.candidates[0].content.parts[0].text.trim();
+                                        if (resultText.startsWith('```json')) resultText = resultText.replace(/^```json/, '').replace(/```$/, '').trim();
+                                        const translatedArray = JSON.parse(resultText);
+                                        
+                                        batch.forEach((item, idx) => {
+                                            const translatedStr = translatedArray[idx] || "";
+                                            const parts = translatedStr.split('DESC:');
+                                            const titleKo = parts[0].replace('TITLE:', '').trim();
+                                            const descKo = (parts[1] || "").trim();
+                                            
+                                            koItems.push({
+                                                ...item,
+                                                title: titleKo || item.title,
+                                                description: descKo || item.description
+                                            });
+                                        });
+                                        
+                                        fs.writeFileSync(KO_DATA_FILE, JSON.stringify(koItems, null, 2), 'utf-8');
+                                        await new Promise(r => setTimeout(r, 2000)); // sleep 2s to avoid rate limit
+                                    }
+                                }
+                            } catch (err) {
+                                console.error("Background translation error:", err);
+                            }
+                        })();
+                    }
+                    
+                    // Return original items for those missing, translated for those available
+                    items = items.map(item => koMap.get(item.guid || item.link) || item);
+                } else {
+                    items = koItems;
+                }
+            }
+            
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(items));
+        } catch (err) {
+            console.error('Error in /api/releases:', err);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Internal Server Error' }));
         }
         return;
     }
@@ -242,14 +335,66 @@ const server = http.createServer(async (req, res) => {
         });
         req.on('end', async () => {
             try {
-                const { text } = JSON.parse(body);
-                if (!text) {
+                const bodyParsed = JSON.parse(body);
+                const texts = Array.isArray(bodyParsed.texts) ? bodyParsed.texts : [bodyParsed.text];
+                
+                if (!texts || texts.length === 0 || !texts[0]) {
                     res.writeHead(400, { 'Content-Type': 'application/json' });
-                    return res.end(JSON.stringify({ error: 'Text is required' }));
+                    return res.end(JSON.stringify({ error: 'Text or texts array is required' }));
                 }
-                const translated = await translateText(text, 'ko');
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ translated }));
+
+                // Translate all texts by joining them with a unique delimiter, or parallelizing
+                // For simplicity and to avoid prompt injection with delimiters, we can do Promise.all
+                // since Gemini 2.5 Flash handles concurrent requests well, but let's batch them into one prompt for efficiency.
+                
+                const prompt = `Translate the following array of release notes into Korean. Return a valid JSON array of strings in the exact same order. Do not return markdown code blocks, just the JSON array.
+                
+                Input:
+                ${JSON.stringify(texts)}`;
+                
+                const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+                if (!apiKey) throw new Error('API key is missing');
+                
+                const geminiReq = https.request({
+                    hostname: 'generativelanguage.googleapis.com',
+                    path: `/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                }, (geminiRes) => {
+                    let data = '';
+                    geminiRes.on('data', chunk => data += chunk);
+                    geminiRes.on('end', () => {
+                        if (geminiRes.statusCode >= 200 && geminiRes.statusCode < 300) {
+                            try {
+                                const parsed = JSON.parse(data);
+                                let resultText = parsed.candidates[0].content.parts[0].text.trim();
+                                if (resultText.startsWith('```json')) {
+                                    resultText = resultText.replace(/^```json/, '').replace(/```$/, '').trim();
+                                }
+                                const translatedArray = JSON.parse(resultText);
+                                res.writeHead(200, { 'Content-Type': 'application/json' });
+                                res.end(JSON.stringify({ translated: Array.isArray(bodyParsed.texts) ? translatedArray : translatedArray[0] }));
+                            } catch (e) {
+                                res.writeHead(500, { 'Content-Type': 'application/json' });
+                                res.end(JSON.stringify({ error: 'Failed to parse Gemini response as JSON array' }));
+                            }
+                        } else {
+                            res.writeHead(geminiRes.statusCode, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({ error: `Gemini API Error: ${data}` }));
+                        }
+                    });
+                });
+
+                geminiReq.on('error', (e) => {
+                    res.writeHead(500, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: e.message }));
+                });
+                
+                geminiReq.write(JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseMimeType: "application/json" }
+                }));
+                geminiReq.end();
             } catch (e) {
                 console.error('Translation error:', e);
                 res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -259,22 +404,7 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
-    if (req.url === '/api/releases') {
-        if (fs.existsSync(DATA_FILE)) {
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            fs.createReadStream(DATA_FILE).pipe(res);
-        } else {
-            try {
-                const data = await updateReleases();
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify(data));
-            } catch(e) {
-                res.writeHead(500, { 'Content-Type': 'text/plain' });
-                res.end('Error fetching releases');
-            }
-        }
-        return;
-    }
+
     
     // Serve static files securely
     let requestUrl = req.url === '/' ? '/index.html' : req.url;
