@@ -19,7 +19,7 @@ if (fs.existsSync(envPath)) {
     });
 }
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const DATA_FILE = path.join(__dirname, 'data', 'releases.json');
 const DATA_DIR = path.join(__dirname, 'data');
@@ -147,6 +147,58 @@ async function updateReleases() {
     });
 }
 
+async function translateText(text, targetLang = 'ko') {
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    if (!apiKey) {
+        throw new Error('API key is missing');
+    }
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    
+    const payload = JSON.stringify({
+        contents: [{
+            parts: [{
+                text: `Translate the following release note to Korean (Target language code: ${targetLang}). Return only the translated text, preserving any HTML tags or markdown formatting if present.\n\nText to translate:\n${text}`
+            }]
+        }],
+        generationConfig: {
+            temperature: 0.3
+        }
+    });
+
+    return new Promise((resolve, reject) => {
+        const req = https.request(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(payload)
+            }
+        }, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                try {
+                    const json = JSON.parse(data);
+                    if (res.statusCode !== 200) {
+                        return reject(new Error(`API Error: ${res.statusCode} ${json.error?.message || data}`));
+                    }
+                    if (!json.candidates || !json.candidates[0]) {
+                        return reject(new Error('Unexpected API response structure'));
+                    }
+                    const translated = json.candidates[0].content.parts[0].text;
+                    resolve(translated);
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        });
+
+        req.on('error', reject);
+        req.write(payload);
+        req.end();
+    });
+}
+
 // Initial fetch and set interval (every 1 hour)
 updateReleases();
 setInterval(updateReleases, 60 * 60 * 1000);
@@ -180,6 +232,30 @@ const server = http.createServer(async (req, res) => {
             res.writeHead(500, { 'Content-Type': 'text/plain' });
             res.end('Error fetching releases');
         }
+        return;
+    }
+
+    if (req.url === '/api/translate' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => {
+            body += chunk.toString();
+        });
+        req.on('end', async () => {
+            try {
+                const { text } = JSON.parse(body);
+                if (!text) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    return res.end(JSON.stringify({ error: 'Text is required' }));
+                }
+                const translated = await translateText(text, 'ko');
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ translated }));
+            } catch (e) {
+                console.error('Translation error:', e);
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: e.message || 'Translation failed' }));
+            }
+        });
         return;
     }
 
